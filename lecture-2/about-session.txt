@@ -1,1 +1,1 @@
-This session was about the Introduction to JavaScript.
+This session was about Basic Introduction to JavaScript and Git.
