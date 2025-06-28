@@ -1,88 +1,86 @@
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
-  FlatList,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
+  Pressable,
+  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
-
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons"; // For icons
 
 export default function App() {
-  const [userInput, setUserInput] = useState("");
-  const [task, setTask] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [text, setText] = useState("");
 
   const addTask = () => {
-    ///[x,y,z] -> x , y , z + userInput => [x,y,z,userInput]
-
-    // task -> [x,y,z]
-    // ...task -> x,y,z
-    // [...task,userInput] => [x,y,z,userInput]
-
-    // task -> [{} , {} , {} , {newObject}]
-
+    if (text.trim().length === 0) return; // Prevent empty tasks
     const newTask = {
       id: Date.now().toString(),
-      name: userInput.trim(),
-      isCompleted: false,
+      text: text.trim(),
+      completed: false,
     };
-
-    setTask((someTask) => [...someTask, newTask]);
-    console.log(task);
-    setUserInput("");
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+    setText("");
   };
 
-  const makeTaskComplete = (id) => {
-    setTask((taskItem) =>
-      task.map((taskItem) =>
-        taskItem.id === id
-          ? { ...taskItem, isCompleted: !taskItem.isCompleted }
-          : taskItem
+  const toggleTaskComplete = (id) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
-    console.log(task.filter((task) => task.id === id));
   };
 
-  // Flat List will give you input you don't need to additionally anything !
-  const renderTask = ({ item }) => {
-    return (
-      <View>
-        <View key={item.id}>
-          <Pressable onPress={() => makeTaskComplete(item.id)}>
-            <Text>
-              {item.name} Task Completed: {item.isCompleted.toString()}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  };
+  const renderTask = ({ item, index }) => (
+    <View style={styles.taskContainer}>
+      <Pressable
+        style={styles.taskItem}
+        onPress={() => toggleTaskComplete(item.id)}
+      >
+        <Ionicons
+          name={item.completed ? "checkbox" : "square-outline"}
+          size={24}
+          color={item.completed ? "#4CAF50" : "#757575"}
+        />
+        <Text
+          style={[styles.taskText, item.completed && styles.taskTextCompleted]}
+        >
+          {index + 1}. {item.text}
+        </Text>
+      </Pressable>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={{ textAlign: "center" }}>Todo APP</Text>
-      <View style={{ flexDirection: "row", gap: 5 }}>
-        <TextInput
-          value={userInput}
-          onChangeText={setUserInput}
-          placeholder="Enter the Value Here"
-          style={{ borderWidth: 1 }}
-        />
+      <StatusBar style="dark" />
+      <Text style={styles.header}>To-Do List</Text>
 
-        <Pressable onPress={addTask}>
-          <View style={{ flexDirection: "row", alignContent: "center" }}>
-            <Ionicons name="add"></Ionicons>
-          </View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={text}
+          onChangeText={setText}
+          placeholder="Enter a task..."
+          placeholderTextColor="#B0BEC5"
+        />
+        <Pressable style={styles.addButton} onPress={addTask}>
+          <Ionicons name="add" size={24} color="#FFF" />
         </Pressable>
       </View>
-      {/* {task && task.map((taskObj) => <Text>{taskObj.name}</Text>)} */}
+
       <FlatList
-        style={{ padding: 10, paddingTop: 10 }}
-        data={task}
+        data={tasks}
         renderItem={renderTask}
+        keyExtractor={(item) => item.id}
+        style={styles.taskList}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No tasks yet. Add one!</Text>
+        }
       />
     </View>
   );
@@ -91,9 +89,74 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F5F5F5",
+    paddingTop: 50,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#212121",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
     alignItems: "center",
+    marginHorizontal: 16,
+    marginBottom: 20,
+  },
+  input: {
+    flex: 1,
+    height: 48,
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  addButton: {
+    backgroundColor: "#2196F3",
+    borderRadius: 8,
+    width: 48,
+    height: 48,
     justifyContent: "center",
-    paddingTop: 100,
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  taskList: {
+    flex: 1,
+    marginHorizontal: 16,
+  },
+  taskContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  taskItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  taskText: {
+    fontSize: 16,
+    color: "#212121",
+    marginLeft: 10,
+    flex: 1,
+  },
+  taskTextCompleted: {
+    textDecorationLine: "line-through",
+    color: "#757575",
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#757575",
+    fontSize: 16,
+    marginTop: 20,
   },
 });
